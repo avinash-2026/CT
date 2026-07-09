@@ -1,0 +1,7 @@
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# Playwright / extract_table.py debug output
+extract_debug.json
