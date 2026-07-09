@@ -232,6 +232,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
   justify-content: center;
 }
 
+/* Quiz questions are revealed one at a time: keep unrevealed cards out of the
+   layout so the slide sizes to the visible question(s) only. Scoped to
+   .quiz-card so other slides' .reveal steps keep their reserved space. */
+.quiz-card:not(.in) { display: none; }
+
 .quiz-option {
   padding: 0.7rem 1rem; border: 1px solid var(--border); border-radius: 14px;
   background: var(--glass); cursor: pointer; transition: all 0.3s;
@@ -837,7 +842,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       Three quick questions. Each one shows how the situation changes what words mean.
     </p>
 
-    <div class="grid lg:grid-cols-2 gap-5" id="quizContainer"></div>
+    <div class="flex flex-col gap-5 max-w-3xl" id="quizContainer"></div>
   </div>
 </section>
 
@@ -1043,9 +1048,11 @@ const quizData = [
 
 const quizContainer = document.getElementById('quizContainer');
 
+const quizSlide = document.getElementById('quiz');
+
 quizData.forEach((q, qIdx) => {
   const card = document.createElement('div');
-  card.className = 'glass p-5 reveal';
+  card.className = 'glass p-5 reveal quiz-card';
   card.innerHTML = `
     <div class="flex items-start gap-3 mb-4">
       <div class="font-mono text-xs uppercase tracking-widest mt-1" style="color: var(--amber);">Q${String(qIdx + 1).padStart(2, '0')}</div>
@@ -1071,6 +1078,7 @@ quizData.forEach((q, qIdx) => {
     opt.addEventListener('click', () => {
       if (answered) return;
       answered = true;
+      card.dataset.answered = 'true';
       const isCorrect = opt.dataset.correct === 'true';
       opt.classList.add(isCorrect ? 'correct' : 'wrong');
       opt.classList.add('answered');
@@ -1091,6 +1099,11 @@ quizData.forEach((q, qIdx) => {
         explainBox.style.borderColor = 'rgba(255, 107, 74, 0.2)';
         explainBox.style.color = 'var(--coral)';
       }
+
+      // Once this question is answered, reveal the next one (and keep the
+      // deck's step index in sync so navigation stays consistent).
+      revealNextStep(quizSlide);
+      updateChrome();
     });
   });
 });
@@ -1268,7 +1281,7 @@ function updateChrome() {
   const slide = slides[current];
   const revealed = slideRevealIndex.get(slide) ?? 0;
   prevBtn.disabled = current === 0 && revealed <= 1;
-  nextBtn.disabled = current === slides.length - 1 && !hasMoreReveals(slide);
+  nextBtn.disabled = (current === slides.length - 1 && !hasMoreReveals(slide)) || quizAdvanceBlocked(slide);
   const id = slides[current].id;
   sideNavDots.forEach(dot => {
     dot.classList.toggle('active', dot.getAttribute('href') === '#' + id);
@@ -1304,9 +1317,22 @@ function goToSlide(idx, dir, opts = {}) {
   resetSlideReveals(inn, opts.showAll ? getRevealables(inn).length : 1);
 }
 
+// On the quiz slide, block advancing while the most recently revealed
+// question is still unanswered — the next question (or next slide) only
+// appears once the current question has been answered.
+function quizAdvanceBlocked(slide) {
+  if (!slide || slide.id !== 'quiz') return false;
+  const els = getRevealables(slide);
+  const revealed = slideRevealIndex.get(slide) ?? 0;
+  if (revealed === 0) return false;
+  const last = els[revealed - 1];
+  return !!(last && last.classList.contains('quiz-card') && last.dataset.answered !== 'true');
+}
+
 function advanceDeck() {
   dismissHint();
   const slide = slides[current];
+  if (quizAdvanceBlocked(slide)) return;
   if (revealNextStep(slide)) {
     updateChrome();
     return;
