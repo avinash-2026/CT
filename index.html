@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contextual Thinking — Context Is King</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --bg-deep: #0c0a08;
+  --bg-warm: #14110d;
+  --surface: #1a1612;
+  --cream: #f5ede0;
+  --cream-dim: #c4b8a8;
+  --muted: #8a7d6e;
+  --amber: #ff9d4d;
+  --amber-bright: #ffb866;
+  --amber-deep: #c97a2e;
+  --sage: #a8c4a0;
+  --coral: #ff6b4a;
+  --gold: #e8b659;
+  --rose: #e88a9b;
+  --border: rgba(245, 237, 224, 0.08);
+  --border-bright: rgba(245, 237, 224, 0.18);
+  --glass: rgba(245, 237, 224, 0.04);
+  --glass-warm: rgba(255, 157, 77, 0.06);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg-deep);
+  color: var(--cream);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.font-serif { font-family: 'Fraunces', Georgia, serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 0.9 0 0 0 0 0.8 0 0 0 0.12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+.ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.ambient-blob { position: absolute; border-radius: 50%; filter: blur(100px); }
+
+main { position: relative; z-index: 2; }
+
+.section { position: relative; padding: 3rem 1.5rem 6rem; }
+@media (min-width: 768px) { .section { padding: 3.5rem 2rem 6.5rem; } }
+
+/* ── PPT deck engine ─────────────────────────────── */
+body.deck-mode { overflow: hidden; }
+
+body.deck-mode .slide {
+  position: fixed; inset: 0;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 2;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition:
+    opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 0.55s;
+}
+body.deck-mode .slide.off-right { transform: translateX(7%); }
+body.deck-mode .slide.off-left { transform: translateX(-7%); }
+body.deck-mode .slide.active {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transform: translateX(0);
+  transition-delay: 0s;
+  z-index: 3;
+}
+body.deck-mode .slide.no-anim { transition: none !important; }
+
+/* content is centered and auto-scaled to always fit the viewport (no scrolling) */
+body.deck-mode .slide > .container,
+body.deck-mode .slide > .container-wide {
+  margin: 0 auto;
+  width: 100%;
+  flex-shrink: 0;
+  transform-origin: center center;
+}
+
+/* When fit-to-slide would shrink below a readable floor (small screens),
+   keep content full size and scroll within the slide instead. */
+body.deck-mode .slide.slide-scroll {
+  overflow-y: auto;
+  justify-content: flex-start;
+  -webkit-overflow-scrolling: touch;
+}
+
+.deck-controls {
+  position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 90;
+  display: flex; align-items: center; gap: 0.9rem;
+}
+@media (min-width: 768px) { .deck-controls { right: 2rem; bottom: 2rem; } }
+.deck-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--glass); color: var(--cream);
+  border: 1px solid var(--border-bright); cursor: pointer;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.deck-btn:hover:not(:disabled) {
+  background: var(--amber); color: var(--bg-deep); border-color: var(--amber);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -8px rgba(255, 157, 77, 0.5);
+}
+.deck-btn:disabled { opacity: 0.3; cursor: default; }
+.deck-counter {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+  letter-spacing: 0.15em; color: var(--cream-dim);
+  min-width: 64px; text-align: center; user-select: none;
+}
+.deck-counter .now { color: var(--amber); }
+
+.deck-hint {
+  position: fixed; left: 50%; bottom: 1.75rem; transform: translateX(-50%);
+  z-index: 89;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  pointer-events: none; user-select: none;
+  transition: opacity 0.6s;
+  display: none;
+}
+@media (min-width: 768px) { .deck-hint { display: block; } }
+.deck-hint.hidden { opacity: 0; }
+.container { max-width: 1200px; margin: 0 auto; }
+.container-wide { max-width: 1400px; margin: 0 auto; }
+
+h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05; letter-spacing: -0.02em; margin: 0; }
+.display-hero { font-size: clamp(3.5rem, 13vw, 11rem); font-weight: 300; line-height: 0.95; }
+.display-2 { font-size: clamp(2.5rem, 7vw, 5.5rem); font-weight: 300; line-height: 1; }
+.display-3 { font-size: clamp(1.75rem, 4vw, 3rem); font-weight: 400; line-height: 1.1; }
+.italic-serif { font-style: italic; color: var(--amber-bright); }
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+}
+
+.progress-bar { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: transparent; z-index: 100; }
+.progress-bar-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--amber), var(--coral));
+  transition: width 0.1s ease-out;
+  box-shadow: 0 0 12px var(--amber);
+}
+
+.side-nav { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); z-index: 50; display: none; }
+@media (min-width: 1024px) { .side-nav { display: flex; flex-direction: column; gap: 0.75rem; } }
+.side-nav-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border-bright); cursor: pointer;
+  transition: all 0.3s; position: relative;
+  text-decoration: none;
+}
+.side-nav-dot.active { background: var(--amber); box-shadow: 0 0 12px var(--amber); transform: scale(1.4); }
+.side-nav-dot::before {
+  content: attr(data-label); position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em;
+  color: var(--cream-dim); text-transform: uppercase; white-space: nowrap;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.side-nav-dot:hover::before { opacity: 1; }
+
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reveal.in { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0s; }
+.reveal-delay-2 { transition-delay: 0s; }
+.reveal-delay-3 { transition-delay: 0s; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  padding: 1rem 1.75rem; background: var(--amber); color: var(--bg-deep);
+  border-radius: 999px; font-weight: 600; border: none; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-decoration: none;
+}
+.btn-primary:hover { background: var(--amber-bright); transform: translateY(-2px); box-shadow: 0 12px 40px -8px rgba(255, 157, 77, 0.5); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  padding: 1rem 1.75rem; background: var(--glass); color: var(--cream);
+  border-radius: 999px; font-weight: 500; border: 1px solid var(--border-bright); cursor: pointer;
+  transition: all 0.3s; text-decoration: none;
+}
+.btn-ghost:hover { background: var(--glass-warm); border-color: var(--amber); }
+
+.floating-word {
+  position: absolute; font-family: 'Fraunces', serif; font-style: italic;
+  color: var(--cream-dim); opacity: 0.12; pointer-events: none; user-select: none;
+}
+
+@keyframes drift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(20px, -30px); }
+  50% { transform: translate(-15px, -50px); }
+  75% { transform: translate(-30px, -20px); }
+  100% { transform: translate(0, 0); }
+}
+
+.tag {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.85rem; border-radius: 999px;
+  font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;
+  background: var(--glass); border: 1px solid var(--border);
+  color: var(--cream-dim); letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+.card {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 24px; padding: 2rem;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.card:hover { border-color: var(--border-bright); transform: translateY(-4px); background: var(--glass-warm); }
+.flow-card {
+  flex: 1 1 300px;
+  min-width: 300px;
+  max-width: 380px;
+  min-height: 260px;
+  padding: 2.75rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.quiz-option {
+  padding: 0.7rem 1rem; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--glass); cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; gap: 0.75rem; text-align: left;
+  width: 100%; color: var(--cream); font-family: inherit; font-size: 0.92rem;
+}
+.quiz-option:hover:not(.answered) { border-color: var(--amber); transform: translateX(4px); background: var(--glass-warm); }
+.quiz-option.correct { border-color: var(--sage); background: rgba(168, 196, 160, 0.1); }
+.quiz-option.wrong { border-color: var(--coral); background: rgba(255, 107, 74, 0.1); }
+.quiz-option .opt-letter {
+  width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border-bright);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; flex-shrink: 0;
+}
+.quiz-option.correct .opt-letter { background: var(--sage); color: var(--bg-deep); border-color: var(--sage); }
+.quiz-option.wrong .opt-letter { background: var(--coral); color: var(--bg-deep); border-color: var(--coral); }
+
+.footer-link { color: var(--cream-dim); text-decoration: none; transition: color 0.2s; }
+.footer-link:hover { color: var(--amber); }
+
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-bright), transparent); }
+
+.pull-quote {
+  font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
+  font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.3;
+  color: var(--cream);
+}
+
+.big-num { font-family: 'Fraunces', serif; font-weight: 200; font-size: clamp(3.5rem, 8vw, 6rem); line-height: 1; color: var(--amber); }
+
+.illust { width: 100%; height: auto; }
+
+.phrase-bubble {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 1.2rem; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--border);
+  font-family: 'Fraunces', serif; font-style: italic; color: var(--cream-dim);
+  font-size: 1.1rem;
+}
+
+/* Anatomy (key components) rows */
+.comp-row {
+  display: flex; gap: 1.25rem; align-items: flex-start;
+  padding: 1.5rem 1.25rem; border-left: 2px solid var(--border);
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+  border-radius: 0 12px 12px 0;
+}
+.comp-row:hover, .comp-row.active {
+  border-left-color: var(--amber);
+  background: linear-gradient(90deg, var(--glass-warm), transparent);
+  transform: translateX(6px);
+  box-shadow: inset 0 0 24px rgba(255, 157, 77, 0.06);
+}
+.comp-row .comp-num {
+  font-family: 'Fraunces', serif; font-weight: 200; font-size: 2.25rem; line-height: 1;
+  color: var(--muted); transition: color 0.35s; flex-shrink: 0; width: 3rem;
+}
+.comp-row:hover .comp-num, .comp-row.active .comp-num { color: var(--amber); }
+.comp-row.active h3 { color: var(--amber-bright) !important; }
+
+.comp-node {
+  transition: opacity 0.35s, filter 0.35s;
+  opacity: 0.35;
+  cursor: pointer;
+  pointer-events: all;
+}
+.comp-node.lit { opacity: 1; }
+.comp-node.lit circle:first-of-type { filter: drop-shadow(0 0 18px rgba(255, 157, 77, 0.85)); }
+.comp-node.lit circle:nth-of-type(2) {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 10px rgba(255, 157, 77, 0.6));
+}
+.comp-node.lit text { fill: var(--cream); }
+
+/* Why-it-matters editorial index */
+.why-row {
+  display: grid; grid-template-columns: 1fr; gap: 0.5rem;
+  padding: 1.25rem 0.5rem; border-top: 1px solid var(--border);
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 768px) { .why-row { grid-template-columns: 90px 1fr 1.3fr; gap: 2rem; align-items: baseline; padding: 1.5rem 1rem; } }
+.why-row:last-child { border-bottom: 1px solid var(--border); }
+.why-row:hover { background: linear-gradient(90deg, var(--glass-warm), transparent); padding-left: 1.5rem; }
+.why-row .why-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 0.2em;
+  color: var(--muted); transition: color 0.35s;
+}
+.why-row:hover .why-num { color: var(--amber); }
+.why-row .why-title {
+  font-family: 'Fraunces', serif; font-size: clamp(1.3rem, 2.4vw, 1.85rem);
+  font-weight: 300; line-height: 1.15; color: var(--cream); transition: color 0.35s;
+}
+.why-row:hover .why-title em { color: var(--amber-bright); }
+.why-row .why-title em { font-style: italic; transition: color 0.35s; }
+
+/* Traditional vs Contextual comparison */
+.vs-row {
+  display: grid; grid-template-columns: 1fr; gap: 0.75rem;
+  padding: 1rem 0.5rem; border-top: 1px solid var(--border);
+}
+@media (min-width: 768px) {
+  .vs-row { grid-template-columns: 110px 1fr 1fr; gap: 1.5rem; align-items: start; padding: 1.25rem 1rem; }
+}
+.vs-row:last-child { border-bottom: 1px solid var(--border); }
+.vs-dim {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber);
+}
+.vs-col-head {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;
+}
+.vs-col-head.trad { color: var(--coral); }
+.vs-col-head.ctx { color: var(--sage); }
+.vs-cell { font-size: 0.95rem; line-height: 1.5; color: var(--cream-dim); }
+
+/* Practical applications field cards */
+.field-card {
+  position: relative; overflow: hidden;
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 24px; padding: 2rem;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.field-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--field-accent, var(--amber));
+  opacity: 0.5; transition: opacity 0.4s;
+}
+.field-card:hover { border-color: var(--border-bright); transform: translateY(-5px); background: var(--glass-warm); }
+.field-card:hover::before { opacity: 1; }
+.field-card .field-index {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.25em;
+  color: var(--field-accent, var(--amber)); text-transform: uppercase;
+}
+
+/* Polish */
+::selection { background: var(--amber); color: var(--bg-deep); }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: #2e2820; border-radius: 5px; border: 2px solid var(--bg-deep); }
+::-webkit-scrollbar-thumb:hover { background: var(--amber-deep); }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+
+<nav class="side-nav" id="sideNav" aria-label="Chapter navigation">
+  <a href="#hero" class="side-nav-dot" data-label="Start" aria-label="Start"></a>
+  <a href="#what-is-context" class="side-nav-dot" data-label="Context" aria-label="Context"></a>
+  <a href="#what-is-thinking" class="side-nav-dot" data-label="The Skill" aria-label="The Skill"></a>
+  <a href="#components" class="side-nav-dot" data-label="Components" aria-label="Components"></a>
+  <a href="#traditional-vs-contextual" class="side-nav-dot" data-label="Traditional vs Contextual" aria-label="Traditional vs Contextual"></a>
+  <a href="#why-matters" class="side-nav-dot" data-label="Why We Need" aria-label="Why We Need"></a>
+  <a href="#confused" class="side-nav-dot" data-label="The Trap" aria-label="The Trap"></a>
+  <a href="#quiz" class="side-nav-dot" data-label="Quiz" aria-label="Quiz"></a>
+  <a href="#fields" class="side-nav-dot" data-label="Professions" aria-label="Professions"></a>
+  <a href="#takeaway" class="side-nav-dot" data-label="Takeaway" aria-label="Takeaway"></a>
+</nav>
+
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-blob" style="width: 700px; height: 700px; background: radial-gradient(circle, rgba(255, 157, 77, 0.25), transparent); top: -200px; left: -200px;"></div>
+  <div class="ambient-blob" style="width: 600px; height: 600px; background: radial-gradient(circle, rgba(255, 107, 74, 0.18), transparent); top: 30%; right: -200px;"></div>
+  <div class="ambient-blob" style="width: 500px; height: 500px; background: radial-gradient(circle, rgba(168, 196, 160, 0.12), transparent); top: 70%; left: 10%;"></div>
+  <div class="ambient-blob" style="width: 500px; height: 500px; background: radial-gradient(circle, rgba(232, 182, 89, 0.15), transparent); bottom: -100px; right: 20%;"></div>
+</div>
+
+<main>
+
+<!-- HERO -->
+<section id="hero" class="section">
+  <div class="container-wide" style="position: relative;">
+    <div class="floating-word" aria-hidden="true" style="top: 5%; left: 8%; font-size: 2rem; animation: drift 18s ease-in-out infinite;">Open.</div>
+    <div class="floating-word" aria-hidden="true" style="top: 12%; right: 10%; font-size: 1.5rem; animation: drift 22s ease-in-out infinite reverse;">Stop.</div>
+    <div class="floating-word" aria-hidden="true" style="top: 45%; left: 4%; font-size: 1.8rem; animation: drift 25s ease-in-out infinite;">Hot.</div>
+    <div class="floating-word" aria-hidden="true" style="bottom: 18%; right: 6%; font-size: 2.2rem; animation: drift 20s ease-in-out infinite reverse;">Bank.</div>
+    <div class="floating-word" aria-hidden="true" style="top: 60%; right: 15%; font-size: 1.4rem; animation: drift 28s ease-in-out infinite;">Manager</div>
+    <div class="floating-word" aria-hidden="true" style="bottom: 30%; left: 14%; font-size: 1.6rem; animation: drift 24s ease-in-out infinite reverse;">AI chat</div>
+
+    <div class="max-w-5xl">
+      <h1 class="display-hero reveal reveal-delay-1">
+        Contextual<br>
+        <span class="italic-serif">Thinking.</span>
+      </h1>
+
+      <p class="reveal reveal-delay-2 mt-8 text-xl md:text-2xl font-light" style="color: var(--cream-dim); max-width: 700px; line-height: 1.5;">
+        The <em style="color: var(--amber-bright); font-style: italic; font-family: 'Fraunces', serif;">situation</em> decides the meaning — not just the words.<br>
+        Let's explore why this matters in a 5-minute interactive journey.
+      </p>
+
+      <div class="reveal reveal-delay-3 mt-10 flex flex-wrap gap-4">
+        <a href="#what-is-context" class="btn-primary">
+          Start the journey
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-3 mt-16 md:mt-20 grid md:grid-cols-3 gap-6 items-end">
+      <div class="md:col-span-1">
+        <div class="text-xs font-mono uppercase tracking-widest mb-3" style="color: var(--muted);">Live preview</div>
+        <p class="font-serif italic text-2xl" style="color: var(--cream-dim);">"Same sentence. Different context. Different meaning."</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="glass p-6 md:p-8" id="heroPreview">
+          <div class="flex items-start justify-between gap-6 mb-6">
+            <div>
+              <div class="text-xs font-mono uppercase tracking-widest mb-2" style="color: var(--muted);">Sentence</div>
+              <div class="font-serif text-3xl md:text-4xl" id="heroSentence" style="transition: opacity 0.25s;">"OPEN"</div>
+            </div>
+            <div class="text-5xl" id="heroEmoji" style="transition: opacity 0.25s;">🏪</div>
+          </div>
+          <div class="divider mb-6"></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--muted);">Context</div>
+              <div id="heroContext" style="color: var(--cream); transition: opacity 0.25s;">Shop sign on a store during daytime</div>
+            </div>
+            <div>
+              <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--muted);">Meaning</div>
+              <div id="heroMeaning" style="color: var(--amber); transition: opacity 0.25s;">The shop is open for customers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: What is Context -->
+<section id="what-is-context" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      What is <span class="italic-serif">context</span>?
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      Context is the situation. The frame. The background. The same words can mean completely different things depending on <em class="italic-serif" style="color: var(--amber-bright);">how</em> they're said, <em class="italic-serif" style="color: var(--amber-bright);">who</em> said them, <em class="italic-serif" style="color: var(--amber-bright);">where</em> they were said, and <em class="italic-serif" style="color: var(--amber-bright);">when</em> they were said.
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div class="reveal">
+        <svg class="illust" viewBox="0 0 500 400" fill="none">
+          <defs>
+            <linearGradient id="lensGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff9d4d" stop-opacity="0.25"/>
+              <stop offset="1" stop-color="#ff6b4a" stop-opacity="0.1"/>
+            </linearGradient>
+            <filter id="blur1"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+          <text x="60" y="120" font-family="Fraunces" font-size="32" fill="#c4b8a8" opacity="0.4" filter="url(#blur1)">Same sentence.</text>
+          <text x="60" y="165" font-family="Fraunces" font-size="32" fill="#c4b8a8" opacity="0.4" filter="url(#blur1)">Different meaning.</text>
+          <text x="60" y="210" font-family="Fraunces" font-size="32" fill="#c4b8a8" opacity="0.4" filter="url(#blur1)">Without</text>
+          <text x="60" y="255" font-family="Fraunces" font-size="32" fill="#c4b8a8" opacity="0.4" filter="url(#blur1)">context...</text>
+          <g transform="translate(250 220)">
+            <circle cx="-70" cy="0" r="80" fill="url(#lensGrad)" stroke="#ff9d4d" stroke-width="2.5"/>
+            <circle cx="70" cy="0" r="80" fill="url(#lensGrad)" stroke="#ff9d4d" stroke-width="2.5"/>
+            <line x1="10" y1="0" x2="-10" y2="0" stroke="#ff9d4d" stroke-width="2.5"/>
+            <line x1="-150" y1="0" x2="-180" y2="-20" stroke="#ff9d4d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="150" y1="0" x2="180" y2="-20" stroke="#ff9d4d" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="-70" y="6" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#f5ede0" font-style="italic">Context</text>
+            <text x="70" y="6" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#f5ede0" font-style="italic">Clarity</text>
+          </g>
+          <text x="250" y="380" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#ff9d4d" letter-spacing="3">CONTEXT = SPECTACLES FOR MEANING</text>
+        </svg>
+      </div>
+
+      <div class="reveal reveal-delay-1">
+        <div class="space-y-6">
+          <div class="card">
+            <div class="flex items-start gap-4">
+              <div class="text-3xl">👓</div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2" style="color: var(--cream);">Like a pair of spectacles</h3>
+                <p style="color: var(--cream-dim);">Without your glasses, letters look blurry, right? You put them on and everything becomes clear. Context works the same way — without it, meaning is blurry.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="flex items-start gap-4">
+              <div class="text-3xl">🎬</div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2" style="color: var(--cream);">Like a movie background</h3>
+                <p style="color: var(--cream-dim);">If you see a character crying with no background scene, do you understand why? No. You need to know who they're with and what just happened. That's context.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: What is Contextual Thinking -->
+<section id="what-is-thinking" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      What is <span class="italic-serif">contextual thinking</span>?
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      Contextual thinking means looking beyond the information itself. It's understanding the <em class="italic-serif" style="color: var(--amber-bright);">situation surrounding</em> the information, and then extracting the true meaning.
+    </p>
+
+    <div class="reveal flex flex-wrap justify-center gap-6 text-center mb-10">
+      <div class="card flow-card">
+        <div class="text-4xl mb-5">💬</div>
+        <div class="text-sm font-mono uppercase tracking-widest mb-3" style="color: var(--muted);">Input</div>
+        <h3 class="text-2xl font-semibold mb-3" style="color: var(--cream);">Information</h3>
+        <p class="text-lg" style="color: var(--cream-dim);">"I'm fine."</p>
+      </div>
+      <div class="card flow-card" style="background: rgba(255, 157, 77, 0.08); border-color: rgba(255, 157, 77, 0.3);">
+        <div class="text-4xl mb-5">👓</div>
+        <div class="text-sm font-mono uppercase tracking-widest mb-3" style="color: var(--amber);">Lens</div>
+        <h3 class="text-2xl font-semibold mb-3" style="color: var(--amber-bright);">+ Context</h3>
+        <p class="text-lg" style="color: var(--cream-dim);">Your wife at home, after a argument.</p>
+      </div>
+      <div class="card flow-card">
+        <div class="text-4xl mb-5">💡</div>
+        <div class="text-sm font-mono uppercase tracking-widest mb-3" style="color: var(--muted);">Output</div>
+        <h3 class="text-2xl font-semibold mb-3" style="color: var(--cream);">= Meaning</h3>
+        <p class="text-lg" style="color: var(--cream-dim);">You are done. khatam tata Bye Bye 👋</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: Key Components -->
+<section id="components" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      The five <span class="italic-serif">components</span>
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      Contextual thinking is not one skill. It is five skills that work together. Move through the list to see how each one connects.
+    </p>
+
+    <div class="grid lg:grid-cols-2 gap-12 items-center" id="compInteract">
+      <div class="reveal order-2 lg:order-1">
+        <div id="compList">
+          <div class="comp-row" data-node="0" tabindex="0">
+            <div class="comp-num">I</div>
+            <div>
+              <h3 class="text-xl font-semibold mb-1" style="color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif;">Notice the situation</h3>
+              <p class="text-sm" style="color: var(--cream-dim);">Look at what is happening around the words — who is speaking, where you are, when it is said, and how they say it. These details change the meaning.</p>
+            </div>
+          </div>
+          <div class="comp-row" data-node="1" tabindex="0">
+            <div class="comp-num">II</div>
+            <div>
+              <h3 class="text-xl font-semibold mb-1" style="color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif;">See their point of view</h3>
+              <p class="text-sm" style="color: var(--cream-dim);">Try to understand how the other person sees things — what they want, what they feel, and what they did not say out loud.</p>
+            </div>
+          </div>
+          <div class="comp-row" data-node="2" tabindex="0">
+            <div class="comp-num">III</div>
+            <div>
+              <h3 class="text-xl font-semibold mb-1" style="color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif;">Spot familiar patterns</h3>
+              <p class="text-sm" style="color: var(--cream-dim);">Use what you have seen before to recognize similar situations quickly. Your past experience helps you understand what is happening now.</p>
+            </div>
+          </div>
+          <div class="comp-row" data-node="3" tabindex="0">
+            <div class="comp-num">IV</div>
+            <div>
+              <h3 class="text-xl font-semibold mb-1" style="color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif;">Change when needed</h3>
+              <p class="text-sm" style="color: var(--cream-dim);">Update your understanding when you learn something new. Do not stick to your first guess.</p>
+            </div>
+          </div>
+          <div class="comp-row" data-node="4" tabindex="0">
+            <div class="comp-num">V</div>
+            <div>
+              <h3 class="text-xl font-semibold mb-1" style="color: var(--cream); font-family: 'Plus Jakarta Sans', sans-serif;">Combine all the clues</h3>
+              <p class="text-sm" style="color: var(--cream-dim);">Put words, body language, culture, history, and the situation together. One clue alone is not enough.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal reveal-delay-1 order-1 lg:order-2">
+        <svg class="illust" viewBox="0 0 500 500" fill="none" id="compConstellation" aria-hidden="true">
+          <defs>
+            <radialGradient id="nodeGlow" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#ff9d4d" stop-opacity="0.5"/>
+              <stop offset="1" stop-color="#ff9d4d" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <g stroke="#8a7d6e" stroke-width="1" opacity="0.35" stroke-dasharray="4 5">
+            <line x1="250" y1="110" x2="395" y2="205"/>
+            <line x1="395" y1="205" x2="340" y2="375"/>
+            <line x1="340" y1="375" x2="160" y2="375"/>
+            <line x1="160" y1="375" x2="105" y2="205"/>
+            <line x1="105" y1="205" x2="250" y2="110"/>
+            <line x1="250" y1="110" x2="250" y2="250"/>
+            <line x1="395" y1="205" x2="250" y2="250"/>
+            <line x1="340" y1="375" x2="250" y2="250"/>
+            <line x1="160" y1="375" x2="250" y2="250"/>
+            <line x1="105" y1="205" x2="250" y2="250"/>
+          </g>
+          <g class="comp-node" data-node="0">
+            <circle cx="250" cy="110" r="46" fill="url(#nodeGlow)"/>
+            <circle cx="250" cy="110" r="30" fill="#1a1612" stroke="#ff9d4d" stroke-width="2"/>
+            <text x="250" y="118" text-anchor="middle" font-size="22">👁️</text>
+            <text x="250" y="62" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c4b8a8" letter-spacing="2">AWARENESS</text>
+          </g>
+          <g class="comp-node" data-node="1">
+            <circle cx="395" cy="205" r="46" fill="url(#nodeGlow)"/>
+            <circle cx="395" cy="205" r="30" fill="#1a1612" stroke="#e88a9b" stroke-width="2"/>
+            <text x="395" y="213" text-anchor="middle" font-size="22">🔄</text>
+            <text x="395" y="160" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c4b8a8" letter-spacing="2">PERSPECTIVE</text>
+          </g>
+          <g class="comp-node" data-node="2">
+            <circle cx="340" cy="375" r="46" fill="url(#nodeGlow)"/>
+            <circle cx="340" cy="375" r="30" fill="#1a1612" stroke="#e8b659" stroke-width="2"/>
+            <text x="340" y="383" text-anchor="middle" font-size="22">🧩</text>
+            <text x="340" y="432" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c4b8a8" letter-spacing="2">PATTERNS</text>
+          </g>
+          <g class="comp-node" data-node="3">
+            <circle cx="160" cy="375" r="46" fill="url(#nodeGlow)"/>
+            <circle cx="160" cy="375" r="30" fill="#1a1612" stroke="#a8c4a0" stroke-width="2"/>
+            <text x="160" y="383" text-anchor="middle" font-size="22">🌊</text>
+            <text x="160" y="432" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c4b8a8" letter-spacing="2">FLEXIBILITY</text>
+          </g>
+          <g class="comp-node" data-node="4">
+            <circle cx="105" cy="205" r="46" fill="url(#nodeGlow)"/>
+            <circle cx="105" cy="205" r="30" fill="#1a1612" stroke="#ff6b4a" stroke-width="2"/>
+            <text x="105" y="213" text-anchor="middle" font-size="22">🔗</text>
+            <text x="105" y="160" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c4b8a8" letter-spacing="2">INTEGRATION</text>
+          </g>
+          <g>
+            <circle cx="250" cy="250" r="26" fill="#ff9d4d" opacity="0.95"/>
+            <text x="250" y="258" text-anchor="middle" font-family="Fraunces" font-size="18" fill="#0c0a08" font-weight="600">CT</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: Traditional vs Contextual -->
+<section id="traditional-vs-contextual" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      Traditional thinking vs <span class="italic-serif">contextual thinking</span>
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-8" style="color: var(--cream-dim); line-height: 1.5;">
+      Most of us default to traditional thinking — fast, word-first, rule-based. Contextual thinking is the upgrade: same information, but you read the situation first.
+    </p>
+
+    <div class="reveal mb-6 hidden md:grid" style="grid-template-columns: 110px 1fr 1fr; gap: 1.5rem; padding: 0 1rem 0.5rem;">
+      <div></div>
+      <div class="vs-col-head trad">Traditional</div>
+      <div class="vs-col-head ctx">Contextual</div>
+    </div>
+
+    <div class="reveal">
+      <div class="vs-row">
+        <div class="vs-dim">Focus</div>
+        <div>
+          <div class="vs-col-head trad md:hidden">Traditional</div>
+          <div class="vs-cell">Words and facts in isolation</div>
+        </div>
+        <div>
+          <div class="vs-col-head ctx md:hidden">Contextual</div>
+          <div class="vs-cell">The situation surrounding the words</div>
+        </div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-dim">Speed</div>
+        <div>
+          <div class="vs-col-head trad md:hidden">Traditional</div>
+          <div class="vs-cell">Snap judgment — first impression wins</div>
+        </div>
+        <div>
+          <div class="vs-col-head ctx md:hidden">Contextual</div>
+          <div class="vs-cell">Pause — ask who, where, when, why</div>
+        </div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-dim">Rules</div>
+        <div>
+          <div class="vs-col-head trad md:hidden">Traditional</div>
+          <div class="vs-cell">One-size-fits-all logic</div>
+        </div>
+        <div>
+          <div class="vs-col-head ctx md:hidden">Contextual</div>
+          <div class="vs-cell">Adapts to specific circumstances</div>
+        </div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-dim">Outcome</div>
+        <div>
+          <div class="vs-col-head trad md:hidden">Traditional</div>
+          <div class="vs-cell">Technically correct but wrong in practice</div>
+        </div>
+        <div>
+          <div class="vs-col-head ctx md:hidden">Contextual</div>
+          <div class="vs-cell">Practically appropriate</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal mt-6 grid md:grid-cols-2 gap-4">
+      <div class="card" style="border-color: rgba(255, 107, 74, 0.25);">
+        <div class="font-mono text-xs uppercase tracking-widest mb-2" style="color: var(--coral);">Traditional read</div>
+        <div class="font-serif text-2xl mb-2" style="color: var(--cream);">"Do whatever you want."</div>
+        <p class="text-sm" style="color: var(--cream-dim);">Nice! Full freedom. I'll order pineapple pizza and pick the movie.</p>
+      </div>
+      <div class="card" style="border-color: rgba(168, 196, 160, 0.25);">
+        <div class="font-mono text-xs uppercase tracking-widest mb-2" style="color: var(--sage);">Contextual read</div>
+        <div class="font-serif text-2xl mb-2" style="color: var(--cream);">"Do whatever you want."</div>
+        <p class="text-sm" style="color: var(--cream-dim);">She said it with arms crossed after I forgot our anniversary. There is one correct answer. I do not know it yet.</p>
+      </div>
+    </div>
+
+    <div class="reveal mt-6 p-5 md:p-8 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+      <p class="pull-quote" style="font-size: clamp(1rem, 2vw, 1.35rem);">
+        Same message. Two mindsets.<br>
+        <span style="color: var(--amber-bright);">Context is the difference.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: Why We Need Contextual Thinking -->
+<section id="why-matters" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      Why we need <span class="italic-serif">contextual thinking</span>
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      This is not just a nice extra skill. You use contextual thinking every day in five important ways.
+    </p>
+
+    <div class="reveal">
+      <div class="why-row">
+        <div class="why-num">Nº 01</div>
+        <div class="why-title">Better <em>communication</em></div>
+        <p style="color: var(--cream-dim);">The same words can mean different things. "Nice job" can be real praise or sarcasm. Context tells you which one it is.</p>
+      </div>
+      <div class="why-row">
+        <div class="why-num">Nº 02</div>
+        <div class="why-title">Better <em>decisions</em></div>
+        <p style="color: var(--cream-dim);">You can pick the right answer on paper but still be wrong in real life. Context helps you match your choice to the actual situation.</p>
+      </div>
+      <div class="why-row">
+        <div class="why-num">Nº 03</div>
+        <div class="why-title">Understanding <em>people</em></div>
+        <p style="color: var(--cream-dim);">"Reading the room" means reading the context. It helps you understand people, act appropriately, and keep good relationships.</p>
+      </div>
+      <div class="why-row">
+        <div class="why-num">Nº 04</div>
+        <div class="why-title">Solving real <em>problems</em></div>
+        <p style="color: var(--cream-dim);">Real problems do not have one answer that works everywhere. You need to look at what is actually happening in front of you.</p>
+      </div>
+      <div class="why-row">
+        <div class="why-num">Nº 05</div>
+        <div class="why-title">Fairer <em>judgments</em></div>
+        <p style="color: var(--cream-dim);">When you skip context, you jump to quick judgments about people or situations. Context helps you judge fairly based on what is really going on.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: Why we get confused -->
+<section id="confused" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      Why do we <span class="italic-serif">get confused</span>?
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      Our brains are wired to make fast decisions. So we often jump to a meaning without checking the context first. That's where confusion begins.
+    </p>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="card reveal">
+        <div class="font-serif text-5xl mb-4" style="color: var(--amber);">01</div>
+        <h3 class="text-xl font-semibold mb-3" style="color: var(--cream);">Fast judgement</h3>
+        <p class="mb-4" style="color: var(--cream-dim);">You see a "WET FLOOR" sign but walk fast anyway without reading the situation.</p>
+        <div class="p-3 rounded-lg" style="background: rgba(255, 107, 74, 0.08); border: 1px solid rgba(255, 107, 74, 0.2);">
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--coral);">Result</div>
+          <div class="text-sm" style="color: var(--cream);">Ignore sign → slip → accident</div>
+        </div>
+      </div>
+      <div class="card reveal reveal-delay-1">
+        <div class="font-serif text-5xl mb-4" style="color: var(--amber);">02</div>
+        <h3 class="text-xl font-semibold mb-3" style="color: var(--cream);">Missing context with AI</h3>
+        <p class="mb-4" style="color: var(--cream-dim);">You ask an AI chatbot "Fix this" but never paste what "this" is or say who it is for. The AI gives a generic answer.</p>
+        <div class="p-3 rounded-lg" style="background: rgba(255, 107, 74, 0.08); border: 1px solid rgba(255, 107, 74, 0.2);">
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--coral);">Result</div>
+          <div class="text-sm" style="color: var(--cream);">No context → vague AI reply → wasted time</div>
+        </div>
+      </div>
+      <div class="card reveal reveal-delay-2">
+        <div class="font-serif text-5xl mb-4" style="color: var(--amber);">03</div>
+        <h3 class="text-xl font-semibold mb-3" style="color: var(--cream);">Same word, wrong meaning</h3>
+        <p class="mb-4" style="color: var(--cream-dim);">You read "river bank" but think of a money bank — the surrounding words tell you which meaning fits.</p>
+        <div class="p-3 rounded-lg" style="background: rgba(255, 107, 74, 0.08); border: 1px solid rgba(255, 107, 74, 0.2);">
+          <div class="text-xs font-mono uppercase tracking-widest mb-1" style="color: var(--coral);">Result</div>
+          <div class="text-sm" style="color: var(--cream);">Miss the context → confusion</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal mt-8 p-6 md:p-10 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+      <p class="pull-quote">
+        "Concluding without context is like<br>
+        trying to <span style="color: var(--coral);">solve a puzzle</span> after seeing<br>
+        only <span style="color: var(--coral);">three pieces.</span>"
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: Quiz -->
+<section id="quiz" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      A small <span class="italic-serif">challenge</span> for you
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-12" style="color: var(--cream-dim); line-height: 1.5;">
+      Three quick questions. Each one shows how the situation changes what words mean.
+    </p>
+
+    <div class="grid lg:grid-cols-2 gap-5" id="quizContainer"></div>
+  </div>
+</section>
+
+<!-- SECTION: Practical Applications -->
+<section id="fields" class="section">
+  <div class="container">
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      Where to apply <span class="italic-serif">contextual thinking</span>
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      This skill shows up everywhere — not just in texts and at the dinner table. Many jobs depend on reading the situation right.
+    </p>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="field-card reveal" style="--field-accent: var(--amber);">
+        <div class="flex items-center justify-between mb-5">
+          <div class="field-index">01 / Communication</div>
+          <div class="text-3xl">🗣️</div>
+        </div>
+        <h3 class="font-serif text-2xl mb-3" style="color: var(--cream);">Everyday conversation</h3>
+        <p class="text-sm" style="color: var(--cream-dim);">You pick up on tone and what's really meant — sarcasm, jokes, or urgency — and talk in a way that fits the people, place, and moment.</p>
+      </div>
+
+      <div class="field-card reveal reveal-delay-1" style="--field-accent: var(--gold);">
+        <div class="flex items-center justify-between mb-5">
+          <div class="field-index">02 / Leadership</div>
+          <div class="text-3xl">🧭</div>
+        </div>
+        <h3 class="font-serif text-2xl mb-3" style="color: var(--cream);">Leading &amp; managing</h3>
+        <p class="text-sm" style="color: var(--cream-dim);">You make choices that fit your team, your market, and your culture — not copy a one-size-fits-all plan from somewhere else.</p>
+      </div>
+
+      <div class="field-card reveal reveal-delay-2" style="--field-accent: var(--sage);">
+        <div class="flex items-center justify-between mb-5">
+          <div class="field-index">03 / Education</div>
+          <div class="text-3xl">🎓</div>
+        </div>
+        <h3 class="font-serif text-2xl mb-3" style="color: var(--cream);">Teaching &amp; learning</h3>
+        <p class="text-sm" style="color: var(--cream-dim);">You help students use what they learn in new situations — not just memorize facts they'll forget.</p>
+      </div>
+
+      <div class="field-card reveal" style="--field-accent: var(--coral);">
+        <div class="flex items-center justify-between mb-5">
+          <div class="field-index">04 / Technology</div>
+          <div class="text-3xl">🤖</div>
+        </div>
+        <h3 class="font-serif text-2xl mb-3" style="color: var(--cream);">Artificial intelligence</h3>
+        <p class="text-sm" style="color: var(--cream-dim);">AI only knows what you share with it. Give the full picture and you get useful answers. Give a one-line prompt and you get generic ones.</p>
+      </div>
+
+      <div class="field-card reveal reveal-delay-1" style="--field-accent: var(--rose);">
+        <div class="flex items-center justify-between mb-5">
+          <div class="field-index">05 / Healthcare</div>
+          <div class="text-3xl">🩺</div>
+        </div>
+        <h3 class="font-serif text-2xl mb-3" style="color: var(--cream);">Diagnosis &amp; care</h3>
+        <p class="text-sm" style="color: var(--cream-dim);">One symptom can mean many different things. Doctors look at your history, your environment, and your situation — not just the symptom itself.</p>
+      </div>
+
+      <div class="field-card reveal reveal-delay-2" style="--field-accent: var(--amber-bright);">
+        <div class="flex items-center justify-between mb-5">
+          <div class="field-index">06 / Law &amp; Ethics</div>
+          <div class="text-3xl">⚖️</div>
+        </div>
+        <h3 class="font-serif text-2xl mb-3" style="color: var(--cream);">Judgment &amp; fairness</h3>
+        <p class="text-sm" style="color: var(--cream-dim);">Following rules blindly can be unfair. Good judges look at each case on its own — that's contextual thinking when it matters most.</p>
+      </div>
+    </div>
+
+    <div class="reveal mt-8 p-6 md:p-10 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+      <p class="pull-quote">
+        "In chats, courtrooms, and code —<br>
+        <span style="color: var(--amber-bright);">good decisions start</span> with understanding the situation."
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: Final Takeaway -->
+<section id="takeaway" class="section">
+  <div class="container">
+    <div class="reveal text-center mb-8">
+      <h2 class="display-hero mb-4" style="font-size: clamp(2.25rem, 5.5vw, 4.5rem);">
+        Context <span class="italic-serif">is king.</span>
+      </h2>
+      <p class="text-base md:text-lg font-light max-w-2xl mx-auto" style="color: var(--cream-dim);">
+        The situation matters more than the words. The silence matters more than the sentence. The intent matters more than the reply.
+      </p>
+    </div>
+
+    <div class="reveal grid md:grid-cols-3 gap-4 mb-8">
+      <div class="glass p-5 text-center">
+        <div class="text-3xl mb-2">🚫</div>
+        <div class="font-mono text-xs uppercase tracking-widest mb-1" style="color: var(--coral);">Without context</div>
+        <div class="font-serif text-xl mb-2" style="color: var(--cream);">Confusion</div>
+        <p class="text-sm" style="color: var(--cream-dim);">"STOP" on the road → you think it means "stop working" → keep driving → danger.</p>
+      </div>
+      <div class="glass p-5 text-center" style="background: rgba(255, 157, 77, 0.06); border-color: rgba(255, 157, 77, 0.2);">
+        <div class="text-3xl mb-2">✨</div>
+        <div class="font-mono text-xs uppercase tracking-widest mb-1" style="color: var(--amber);">With context</div>
+        <div class="font-serif text-xl mb-2" style="color: var(--cream);">Clarity</div>
+        <p class="text-sm" style="color: var(--cream-dim);">Red octagonal "STOP" sign at an intersection → stop the car → safe.</p>
+      </div>
+      <div class="glass p-5 text-center">
+        <div class="text-3xl mb-2">🎓</div>
+        <div class="font-mono text-xs uppercase tracking-widest mb-1" style="color: var(--sage);">With practice</div>
+        <div class="font-serif text-xl mb-2" style="color: var(--cream);">Wisdom</div>
+        <p class="text-sm" style="color: var(--cream-dim);">Checking context becomes an automatic habit. Better relationships, better work, better life.</p>
+      </div>
+    </div>
+
+    <div class="reveal p-5 md:p-6 glass text-center mb-8" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.08), rgba(255, 107, 74, 0.04));">
+      <p class="pull-quote" style="font-size: clamp(1.1rem, 2vw, 1.5rem);">
+        "Next time you read a word, a sign, or a sentence,
+        <span style="color: var(--amber-bright);">pause for two seconds</span> —
+        <em class="italic-serif">who? where? when? why?</em> — and then decide."
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="deck-controls">
+  <button class="deck-btn" id="prevBtn" aria-label="Previous slide">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="deck-counter" aria-live="polite"><span class="now" id="slideNow">01</span> / <span id="slideTotal"></span></div>
+  <button class="deck-btn" id="nextBtn" aria-label="Next slide">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </button>
+</div>
+
+<div class="deck-hint" id="deckHint">Click or → to reveal · then advance</div>
+
+<script>
+// Deck engine (slides, progress, side-nav sync) is initialized
+// at the end of this script, after all widgets are built.
+
+// Hero preview auto-cycle
+const heroData = [
+  { sentence: '"OPEN"', emoji: '🏪', context: 'Shop sign on a store during daytime', meaning: 'The shop is open for customers' },
+  { sentence: '"OPEN"', emoji: '📖', context: 'Teacher in a classroom', meaning: 'Open your textbook to page 10' },
+  { sentence: '"Is this okay?"', emoji: '💬', context: 'Your wife at home, after a disagreement', meaning: 'Are we really fine? — feelings still hurt' },
+  { sentence: '"Is this okay?"', emoji: '😄', context: 'Your friend in a text, sharing a photo', meaning: 'Do you like how I look? — wants your opinion' },
+  { sentence: '"Is this okay?"', emoji: '👔', context: 'Your manager at the office, before a deadline', meaning: 'Is this report ready to send? — work approval' },
+  { sentence: '"Fix this."', emoji: '🤖', context: 'AI chatbot — you gave no background', meaning: 'AI cannot help until you explain what "this" is' },
+  { sentence: '"OPEN"', emoji: '🩺', context: 'Doctor at a clinic', meaning: 'Open your mouth for examination' },
+  { sentence: '"OPEN"', emoji: '📱', context: 'Phone notification while app is updating', meaning: 'The update is complete — app is ready' },
+];
+let heroIdx = 0;
+const heroSentence = document.getElementById('heroSentence');
+const heroEmoji = document.getElementById('heroEmoji');
+const heroContext = document.getElementById('heroContext');
+const heroMeaning = document.getElementById('heroMeaning');
+
+function updateHero() {
+  const d = heroData[heroIdx];
+  [heroSentence, heroEmoji, heroContext, heroMeaning].forEach(el => el.style.opacity = '0');
+  setTimeout(() => {
+    heroSentence.textContent = d.sentence;
+    heroEmoji.textContent = d.emoji;
+    heroContext.textContent = d.context;
+    heroMeaning.textContent = d.meaning;
+    [heroSentence, heroEmoji, heroContext, heroMeaning].forEach(el => el.style.opacity = '1');
+  }, 250);
+  heroIdx = (heroIdx + 1) % heroData.length;
+}
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  setInterval(() => { if (!document.hidden) updateHero(); }, 3200);
+}
+
+// Quiz
+const quizData = [
+  {
+    scenario: 'A shop has a big OPEN sign on the door. What does OPEN mean here?',
+    options: [
+      { letter: 'A', text: 'Open your bag', correct: false, explain: 'That would be at security — not a shop sign on the door.' },
+      { letter: 'B', text: 'The shop is open for customers', correct: true, explain: 'Right! A shop sign during the day means the store is open for business.' },
+      { letter: 'C', text: 'Open the emergency exit', correct: false, explain: 'Emergency exits say EXIT. This is a shop front door.' },
+      { letter: 'D', text: 'Open a bank account', correct: false, explain: 'A shop sells things — that is a different situation.' },
+    ]
+  },
+  {
+    scenario: '"We sat on the river bank" and "I went to the bank to get money." Does bank mean the same thing?',
+    options: [
+      { letter: 'A', text: 'Yes, always the same', correct: false, explain: 'Same word, but the other words in the sentence change what it means.' },
+      { letter: 'B', text: 'No — the other words change the meaning', correct: true, explain: 'Right! River bank = land by the water. Money bank = where you keep cash.' },
+      { letter: 'C', text: 'Only experts know', correct: false, explain: 'Anyone can tell — just read the full sentence.' },
+      { letter: 'D', text: 'It depends on your accent', correct: false, explain: 'Accent does not change meaning. The words around it do.' },
+    ]
+  },
+  {
+    scenario: 'You ask an AI chatbot "Is this okay?" but you never say what "this" is. What should you do?',
+    options: [
+      { letter: 'A', text: 'Ask the same question again', correct: false, explain: 'Repeating a vague question without details gets the same vague answer.' },
+      { letter: 'B', text: 'Tell the AI what "this" is and what you need', correct: true, explain: 'Right! AI only knows what you type. Share the details and your goal.' },
+      { letter: 'C', text: 'Assume the AI already knows', correct: false, explain: 'The AI cannot see your screen or your life unless you explain it.' },
+      { letter: 'D', text: 'Try a different chatbot', correct: false, explain: 'Any AI needs context. Switching tools without explaining "this" will not help.' },
+    ]
+  }
+];
+
+const quizContainer = document.getElementById('quizContainer');
+
+quizData.forEach((q, qIdx) => {
+  const card = document.createElement('div');
+  card.className = 'glass p-5 reveal';
+  card.innerHTML = `
+    <div class="flex items-start gap-3 mb-4">
+      <div class="font-mono text-xs uppercase tracking-widest mt-1" style="color: var(--amber);">Q${String(qIdx + 1).padStart(2, '0')}</div>
+      <div class="font-serif text-base md:text-lg" style="color: var(--cream);">${q.scenario}</div>
+    </div>
+    <div class="space-y-2" data-quiz="${qIdx}">
+      ${q.options.map((opt, oIdx) => `
+        <button class="quiz-option" data-correct="${opt.correct}" data-opt-idx="${oIdx}">
+          <div class="opt-letter">${opt.letter}</div>
+          <div class="flex-1">${opt.text}</div>
+        </button>
+      `).join('')}
+    </div>
+    <div class="mt-3 p-3 rounded-xl text-sm" style="display: none; background: rgba(168, 196, 160, 0.08); border: 1px solid rgba(168, 196, 160, 0.2); color: var(--sage);" data-explain-box></div>
+  `;
+  quizContainer.appendChild(card);
+
+  const options = card.querySelectorAll('.quiz-option');
+  const explainBox = card.querySelector('[data-explain-box]');
+  let answered = false;
+
+  options.forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      const isCorrect = opt.dataset.correct === 'true';
+      opt.classList.add(isCorrect ? 'correct' : 'wrong');
+      opt.classList.add('answered');
+      options.forEach(o => {
+        o.classList.add('answered');
+        if (o.dataset.correct === 'true' && o !== opt) {
+          o.classList.add('correct');
+        }
+      });
+      explainBox.style.display = 'block';
+      explainBox.textContent = q.options[Number(opt.dataset.optIdx)].explain;
+      if (isCorrect) {
+        explainBox.style.background = 'rgba(168, 196, 160, 0.08)';
+        explainBox.style.borderColor = 'rgba(168, 196, 160, 0.2)';
+        explainBox.style.color = 'var(--sage)';
+      } else {
+        explainBox.style.background = 'rgba(255, 107, 74, 0.08)';
+        explainBox.style.borderColor = 'rgba(255, 107, 74, 0.2)';
+        explainBox.style.color = 'var(--coral)';
+      }
+    });
+  });
+});
+
+// ══════════════════════════════════════════════════
+// COMPONENT CONSTELLATION — list ↔ node hover sync
+// ══════════════════════════════════════════════════
+(function initCompConstellation() {
+  const zone = document.getElementById('compInteract');
+  const rows = Array.from(document.querySelectorAll('#compList .comp-row'));
+  const nodes = Array.from(document.querySelectorAll('#compConstellation .comp-node'));
+  if (!zone || !rows.length || !nodes.length) return;
+
+  let activeIdx = null;
+
+  function setActive(idx) {
+    if (activeIdx === idx) return;
+    activeIdx = idx;
+    rows.forEach((row, i) => row.classList.toggle('active', i === idx));
+    nodes.forEach((node, i) => node.classList.toggle('lit', i === idx));
+  }
+
+  function clearActive() {
+    activeIdx = null;
+    rows.forEach(row => row.classList.remove('active'));
+    nodes.forEach(node => node.classList.remove('lit'));
+  }
+
+  rows.forEach((row, i) => {
+    row.addEventListener('mouseenter', () => setActive(i));
+    row.addEventListener('focus', () => setActive(i));
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setActive(i);
+      }
+    });
+  });
+
+  nodes.forEach((node, i) => {
+    node.addEventListener('mouseenter', () => setActive(i));
+    node.addEventListener('click', () => setActive(i));
+  });
+
+  zone.addEventListener('mouseleave', (e) => {
+    if (!zone.contains(e.relatedTarget)) clearActive();
+  });
+
+  zone.addEventListener('focusout', (e) => {
+    requestAnimationFrame(() => {
+      if (!zone.contains(document.activeElement)) clearActive();
+    });
+  });
+})();
+
+// ══════════════════════════════════════════════════
+// FULLSCREEN LAUNCH (?fullscreen=1 from PowerPoint link)
+// ══════════════════════════════════════════════════
+(function initFullscreenLaunch() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has('fullscreen')) return;
+
+  const root = document.documentElement;
+  function enterFullscreen() {
+    if (document.fullscreenElement) return Promise.resolve();
+    if (root.requestFullscreen) return root.requestFullscreen();
+    if (root.webkitRequestFullscreen) return root.webkitRequestFullscreen();
+    return Promise.reject(new Error('Fullscreen unavailable'));
+  }
+
+  enterFullscreen().catch(() => {
+    const resume = () => {
+      enterFullscreen().catch(() => {});
+    };
+    document.addEventListener('click', resume, { once: true });
+    document.addEventListener('keydown', resume, { once: true });
+  });
+})();
+
+// ══════════════════════════════════════════════════
+// PPT DECK ENGINE
+// ══════════════════════════════════════════════════
+const slides = Array.from(document.querySelectorAll('main > section.section'));
+const sideNavDots = document.querySelectorAll('.side-nav-dot');
+const progressFill = document.getElementById('progressFill');
+const slideNow = document.getElementById('slideNow');
+const slideTotal = document.getElementById('slideTotal');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const deckHint = document.getElementById('deckHint');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let current = 0;
+let hintDismissed = false;
+const slideRevealIndex = new Map();
+
+document.body.classList.add('deck-mode');
+slides.forEach((s, i) => {
+  s.classList.add('slide');
+  if (i !== 0) s.classList.add('off-right');
+});
+slideTotal.textContent = String(slides.length).padStart(2, '0');
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function getRevealables(slide) {
+  return Array.from(slide.querySelectorAll('.reveal'));
+}
+
+function resetSlideReveals(slide, visibleCount) {
+  const els = getRevealables(slide);
+  els.forEach(el => el.classList.remove('in'));
+  if (reducedMotion || els.length === 0) {
+    els.forEach(el => el.classList.add('in'));
+    slideRevealIndex.set(slide, els.length);
+    return;
+  }
+  const count = Math.max(0, Math.min(visibleCount, els.length));
+  for (let i = 0; i < count; i++) els[i].classList.add('in');
+  slideRevealIndex.set(slide, count);
+}
+
+function hasMoreReveals(slide) {
+  const els = getRevealables(slide);
+  return (slideRevealIndex.get(slide) ?? 0) < els.length;
+}
+
+function revealNextStep(slide) {
+  const els = getRevealables(slide);
+  const idx = slideRevealIndex.get(slide) ?? 0;
+  if (idx >= els.length) return false;
+  els[idx].classList.add('in');
+  slideRevealIndex.set(slide, idx + 1);
+  fitSlide(slide);
+  return true;
+}
+
+function hideLastStep(slide) {
+  const els = getRevealables(slide);
+  let idx = slideRevealIndex.get(slide) ?? els.length;
+  if (idx <= 1) return false;
+  idx--;
+  els[idx].classList.remove('in');
+  slideRevealIndex.set(slide, idx);
+  fitSlide(slide);
+  return true;
+}
+
+function dismissHint() {
+  if (!hintDismissed) {
+    deckHint.classList.add('hidden');
+    hintDismissed = true;
+  }
+}
+
+// Scale a slide's content down so it fits the viewport, like PowerPoint's
+// fit-to-slide. Below MIN_FIT_SCALE the text becomes unreadable (phones were
+// hitting ~0.33 = 5px text), so keep full size and let the slide scroll
+// instead. 0.6 keeps every slide in deck mode on 1080p desktops.
+const MIN_FIT_SCALE = 0.6;
+function fitSlide(slide) {
+  const c = slide.querySelector(':scope > .container, :scope > .container-wide');
+  if (!c) return;
+  c.style.transform = 'none';
+  const cs = getComputedStyle(slide);
+  const avail = slide.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const scale = Math.min(1, avail / c.offsetHeight);
+  slide.classList.toggle('slide-scroll', scale < MIN_FIT_SCALE);
+  c.style.transform = (scale >= 1 || scale < MIN_FIT_SCALE) ? 'none' : `scale(${scale})`;
+}
+
+function updateChrome() {
+  slideNow.textContent = pad(current + 1);
+  progressFill.style.width = ((current + 1) / slides.length) * 100 + '%';
+  const slide = slides[current];
+  const revealed = slideRevealIndex.get(slide) ?? 0;
+  prevBtn.disabled = current === 0 && revealed <= 1;
+  nextBtn.disabled = current === slides.length - 1 && !hasMoreReveals(slide);
+  const id = slides[current].id;
+  sideNavDots.forEach(dot => {
+    dot.classList.toggle('active', dot.getAttribute('href') === '#' + id);
+  });
+  history.replaceState(null, '', '#' + id);
+}
+
+function goToSlide(idx, dir, opts = {}) {
+  idx = Math.max(0, Math.min(slides.length - 1, idx));
+  if (idx === current) return;
+  dir = dir || (idx > current ? 1 : -1);
+
+  const out = slides[current];
+  const inn = slides[idx];
+
+  out.classList.remove('active');
+  out.classList.remove('off-left', 'off-right');
+  out.classList.add(dir === 1 ? 'off-left' : 'off-right');
+
+  // Park the incoming slide on the entry side without animating the jump.
+  inn.classList.add('no-anim');
+  inn.classList.remove('off-left', 'off-right');
+  inn.classList.add(dir === 1 ? 'off-right' : 'off-left');
+  void inn.offsetWidth;
+  inn.classList.remove('no-anim');
+  inn.classList.remove('off-left', 'off-right');
+  inn.classList.add('active');
+
+  current = idx;
+  updateChrome();
+  fitSlide(inn);
+  inn.scrollTop = 0;
+  resetSlideReveals(inn, opts.showAll ? getRevealables(inn).length : 1);
+}
+
+function advanceDeck() {
+  dismissHint();
+  const slide = slides[current];
+  if (revealNextStep(slide)) {
+    updateChrome();
+    return;
+  }
+  if (current < slides.length - 1) goToSlide(current + 1, 1);
+}
+
+function retreatDeck() {
+  dismissHint();
+  const slide = slides[current];
+  if (hideLastStep(slide)) {
+    updateChrome();
+    return;
+  }
+  if (current > 0) goToSlide(current - 1, -1, { showAll: true });
+}
+
+const nextSlide = () => advanceDeck();
+const prevSlide = () => retreatDeck();
+
+prevBtn.addEventListener('click', prevSlide);
+nextBtn.addEventListener('click', nextSlide);
+
+// Keyboard navigation
+window.addEventListener('keydown', (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  // Focused interactive elements own their keys: Space on a quiz option must
+  // answer it, and text/select controls need arrows, Home/End, etc.
+  if (e.target.closest?.('input, select, textarea, [contenteditable="true"]')) return;
+  if (e.key === ' ' && e.target.closest?.('a, button, [role="button"], [tabindex]')) return;
+  switch (e.key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+    case 'PageDown':
+    case ' ':
+      e.preventDefault();
+      nextSlide();
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+    case 'PageUp':
+      e.preventDefault();
+      prevSlide();
+      break;
+    case 'Home':
+      e.preventDefault();
+      goToSlide(0);
+      break;
+    case 'End':
+      e.preventDefault();
+      goToSlide(slides.length - 1);
+      break;
+  }
+});
+
+// Click on slide background advances — but never on interactive elements.
+const INTERACTIVE = 'a, button, input, select, textarea, [role="button"], .comp-row, .comp-node';
+document.querySelector('main').addEventListener('click', (e) => {
+  if (e.target.closest(INTERACTIVE)) return;
+  if (window.getSelection && String(window.getSelection()).length) return;
+  nextSlide();
+});
+
+// Route every internal anchor (side-nav dots, CTA, footer links) to its slide.
+const slideIndexById = {};
+slides.forEach((s, i) => { slideIndexById[s.id] = i; });
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    const id = a.getAttribute('href').slice(1);
+    if (id in slideIndexById) {
+      e.preventDefault();
+      e.stopPropagation();
+      goToSlide(slideIndexById[id]);
+    }
+  });
+});
+
+// Manual URL hash edits also navigate the deck
+window.addEventListener('hashchange', () => {
+  const id = location.hash.slice(1);
+  if (id in slideIndexById) goToSlide(slideIndexById[id]);
+});
+
+// Re-fit on resize and once fonts finish loading (heights shift slightly)
+window.addEventListener('resize', () => fitSlide(slides[current]));
+// Re-fit when in-slide content grows/shrinks (quiz explanations, etc.)
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => fitSlide(slides[current]));
+  slides.forEach(s => {
+    const c = s.querySelector(':scope > .container, :scope > .container-wide');
+    if (c) ro.observe(c);
+  });
+}
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => fitSlide(slides[current]));
+}
+
+// Init: honor deep links like index.html#quiz
+const startId = location.hash.slice(1);
+current = (startId in slideIndexById) ? slideIndexById[startId] : 0;
+slides[current].classList.remove('off-right');
+slides[current].classList.add('active');
+resetSlideReveals(slides[current], 1);
+updateChrome();
+fitSlide(slides[current]);
+if (current > 0) { deckHint.classList.add('hidden'); hintDismissed = true; }
+</script>
+</body>
+</html>
