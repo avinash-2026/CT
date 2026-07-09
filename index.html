@@ -206,19 +206,6 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 }
 .btn-ghost:hover { background: var(--glass-warm); border-color: var(--amber); }
 
-.floating-word {
-  position: absolute; font-family: 'Fraunces', serif; font-style: italic;
-  color: var(--cream-dim); opacity: 0.12; pointer-events: none; user-select: none;
-}
-
-@keyframes drift {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(20px, -30px); }
-  50% { transform: translate(-15px, -50px); }
-  75% { transform: translate(-30px, -20px); }
-  100% { transform: translate(0, 0); }
-}
-
 .tag {
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.35rem 0.85rem; border-radius: 999px;
@@ -423,13 +410,6 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 <!-- HERO -->
 <section id="hero" class="section">
   <div class="container-wide" style="position: relative;">
-    <div class="floating-word" aria-hidden="true" style="top: 5%; left: 8%; font-size: 2rem; animation: drift 18s ease-in-out infinite;">Open.</div>
-    <div class="floating-word" aria-hidden="true" style="top: 12%; right: 10%; font-size: 1.5rem; animation: drift 22s ease-in-out infinite reverse;">Stop.</div>
-    <div class="floating-word" aria-hidden="true" style="top: 45%; left: 4%; font-size: 1.8rem; animation: drift 25s ease-in-out infinite;">Hot.</div>
-    <div class="floating-word" aria-hidden="true" style="bottom: 18%; right: 6%; font-size: 2.2rem; animation: drift 20s ease-in-out infinite reverse;">Bank.</div>
-    <div class="floating-word" aria-hidden="true" style="top: 60%; right: 15%; font-size: 1.4rem; animation: drift 28s ease-in-out infinite;">Manager</div>
-    <div class="floating-word" aria-hidden="true" style="bottom: 30%; left: 14%; font-size: 1.6rem; animation: drift 24s ease-in-out infinite reverse;">AI chat</div>
-
     <div class="max-w-5xl">
       <h1 class="display-hero reveal reveal-delay-1">
         Contextual<br>
