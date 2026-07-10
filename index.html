@@ -206,19 +206,6 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 }
 .btn-ghost:hover { background: var(--glass-warm); border-color: var(--amber); }
 
-.floating-word {
-  position: absolute; font-family: 'Fraunces', serif; font-style: italic;
-  color: var(--cream-dim); opacity: 0.12; pointer-events: none; user-select: none;
-}
-
-@keyframes drift {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(20px, -30px); }
-  50% { transform: translate(-15px, -50px); }
-  75% { transform: translate(-30px, -20px); }
-  100% { transform: translate(0, 0); }
-}
-
 .tag {
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.35rem 0.85rem; border-radius: 999px;
@@ -244,6 +231,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
   align-items: center;
   justify-content: center;
 }
+
+/* Quiz questions are revealed one at a time: keep unrevealed cards out of the
+   layout so the slide sizes to the visible question(s) only. Scoped to
+   .quiz-card so other slides' .reveal steps keep their reserved space. */
+.quiz-card:not(.in) { display: none; }
 
 .quiz-option {
   padding: 0.7rem 1rem; border: 1px solid var(--border); border-radius: 14px;
@@ -423,13 +415,6 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 <!-- HERO -->
 <section id="hero" class="section">
   <div class="container-wide" style="position: relative;">
-    <div class="floating-word" aria-hidden="true" style="top: 5%; left: 8%; font-size: 2rem; animation: drift 18s ease-in-out infinite;">Open.</div>
-    <div class="floating-word" aria-hidden="true" style="top: 12%; right: 10%; font-size: 1.5rem; animation: drift 22s ease-in-out infinite reverse;">Stop.</div>
-    <div class="floating-word" aria-hidden="true" style="top: 45%; left: 4%; font-size: 1.8rem; animation: drift 25s ease-in-out infinite;">Hot.</div>
-    <div class="floating-word" aria-hidden="true" style="bottom: 18%; right: 6%; font-size: 2.2rem; animation: drift 20s ease-in-out infinite reverse;">Bank.</div>
-    <div class="floating-word" aria-hidden="true" style="top: 60%; right: 15%; font-size: 1.4rem; animation: drift 28s ease-in-out infinite;">Manager</div>
-    <div class="floating-word" aria-hidden="true" style="bottom: 30%; left: 14%; font-size: 1.6rem; animation: drift 24s ease-in-out infinite reverse;">AI chat</div>
-
     <div class="max-w-5xl">
       <h1 class="display-hero reveal reveal-delay-1">
         Contextual<br>
@@ -440,13 +425,6 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
         The <em style="color: var(--amber-bright); font-style: italic; font-family: 'Fraunces', serif;">situation</em> decides the meaning — not just the words.<br>
         Let's explore why this matters in a 5-minute interactive journey.
       </p>
-
-      <div class="reveal reveal-delay-3 mt-10 flex flex-wrap gap-4">
-        <a href="#what-is-context" class="btn-primary">
-          Start the journey
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
-      </div>
     </div>
 
     <div class="reveal reveal-delay-3 mt-16 md:mt-20 grid md:grid-cols-3 gap-6 items-end">
@@ -851,14 +829,6 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
         </div>
       </div>
     </div>
-
-    <div class="reveal mt-8 p-6 md:p-10 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
-      <p class="pull-quote">
-        "Concluding without context is like<br>
-        trying to <span style="color: var(--coral);">solve a puzzle</span> after seeing<br>
-        only <span style="color: var(--coral);">three pieces.</span>"
-      </p>
-    </div>
   </div>
 </section>
 
@@ -872,7 +842,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       Three quick questions. Each one shows how the situation changes what words mean.
     </p>
 
-    <div class="grid lg:grid-cols-2 gap-5" id="quizContainer"></div>
+    <div class="flex flex-col gap-5 max-w-3xl" id="quizContainer"></div>
   </div>
 </section>
 
@@ -968,13 +938,13 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
         <div class="text-3xl mb-2">🚫</div>
         <div class="font-mono text-xs uppercase tracking-widest mb-1" style="color: var(--coral);">Without context</div>
         <div class="font-serif text-xl mb-2" style="color: var(--cream);">Confusion</div>
-        <p class="text-sm" style="color: var(--cream-dim);">"STOP" on the road → you think it means "stop working" → keep driving → danger.</p>
+        <p class="text-sm" style="color: var(--cream-dim);">"POSITIVE" on a test result → you assume the worst → panic and dread.</p>
       </div>
       <div class="glass p-5 text-center" style="background: rgba(255, 157, 77, 0.06); border-color: rgba(255, 157, 77, 0.2);">
         <div class="text-3xl mb-2">✨</div>
         <div class="font-mono text-xs uppercase tracking-widest mb-1" style="color: var(--amber);">With context</div>
         <div class="font-serif text-xl mb-2" style="color: var(--cream);">Clarity</div>
-        <p class="text-sm" style="color: var(--cream-dim);">Red octagonal "STOP" sign at an intersection → stop the car → safe.</p>
+        <p class="text-sm" style="color: var(--cream-dim);">Doctor explains it's a "POSITIVE" immunity result → you're protected → relief.</p>
       </div>
       <div class="glass p-5 text-center">
         <div class="text-3xl mb-2">🎓</div>
@@ -1042,7 +1012,7 @@ function updateHero() {
   heroIdx = (heroIdx + 1) % heroData.length;
 }
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  setInterval(() => { if (!document.hidden) updateHero(); }, 3200);
+  setInterval(() => { if (!document.hidden) updateHero(); }, 4800);
 }
 
 // Quiz
@@ -1078,9 +1048,11 @@ const quizData = [
 
 const quizContainer = document.getElementById('quizContainer');
 
+const quizSlide = document.getElementById('quiz');
+
 quizData.forEach((q, qIdx) => {
   const card = document.createElement('div');
-  card.className = 'glass p-5 reveal';
+  card.className = 'glass p-5 reveal quiz-card';
   card.innerHTML = `
     <div class="flex items-start gap-3 mb-4">
       <div class="font-mono text-xs uppercase tracking-widest mt-1" style="color: var(--amber);">Q${String(qIdx + 1).padStart(2, '0')}</div>
@@ -1106,6 +1078,7 @@ quizData.forEach((q, qIdx) => {
     opt.addEventListener('click', () => {
       if (answered) return;
       answered = true;
+      card.dataset.answered = 'true';
       const isCorrect = opt.dataset.correct === 'true';
       opt.classList.add(isCorrect ? 'correct' : 'wrong');
       opt.classList.add('answered');
@@ -1126,6 +1099,11 @@ quizData.forEach((q, qIdx) => {
         explainBox.style.borderColor = 'rgba(255, 107, 74, 0.2)';
         explainBox.style.color = 'var(--coral)';
       }
+
+      // Once this question is answered, reveal the next one (and keep the
+      // deck's step index in sync so navigation stays consistent).
+      revealNextStep(quizSlide);
+      updateChrome();
     });
   });
 });
@@ -1303,7 +1281,7 @@ function updateChrome() {
   const slide = slides[current];
   const revealed = slideRevealIndex.get(slide) ?? 0;
   prevBtn.disabled = current === 0 && revealed <= 1;
-  nextBtn.disabled = current === slides.length - 1 && !hasMoreReveals(slide);
+  nextBtn.disabled = (current === slides.length - 1 && !hasMoreReveals(slide)) || quizAdvanceBlocked(slide);
   const id = slides[current].id;
   sideNavDots.forEach(dot => {
     dot.classList.toggle('active', dot.getAttribute('href') === '#' + id);
@@ -1339,9 +1317,22 @@ function goToSlide(idx, dir, opts = {}) {
   resetSlideReveals(inn, opts.showAll ? getRevealables(inn).length : 1);
 }
 
+// On the quiz slide, block advancing while the most recently revealed
+// question is still unanswered — the next question (or next slide) only
+// appears once the current question has been answered.
+function quizAdvanceBlocked(slide) {
+  if (!slide || slide.id !== 'quiz') return false;
+  const els = getRevealables(slide);
+  const revealed = slideRevealIndex.get(slide) ?? 0;
+  if (revealed === 0) return false;
+  const last = els[revealed - 1];
+  return !!(last && last.classList.contains('quiz-card') && last.dataset.answered !== 'true');
+}
+
 function advanceDeck() {
   dismissHint();
   const slide = slides[current];
+  if (quizAdvanceBlocked(slide)) return;
   if (revealNextStep(slide)) {
     updateChrome();
     return;
