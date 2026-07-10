@@ -349,16 +349,16 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 }
 .vs-row:last-child { border-bottom: 1px solid var(--border); }
 .vs-dim {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
   letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber);
 }
 .vs-col-head {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
   letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;
 }
 .vs-col-head.trad { color: var(--coral); }
 .vs-col-head.ctx { color: var(--sage); }
-.vs-cell { font-size: 0.95rem; line-height: 1.5; color: var(--cream-dim); }
+.vs-cell { font-size: 1.1rem; line-height: 1.5; color: var(--cream-dim); }
 
 /* Practical applications field cards */
 .field-card {
@@ -375,9 +375,13 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 .field-card:hover { border-color: var(--border-bright); transform: translateY(-5px); background: var(--glass-warm); }
 .field-card:hover::before { opacity: 1; }
 .field-card .field-index {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.25em;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.25em;
   color: var(--field-accent, var(--amber)); text-transform: uppercase;
 }
+/* Body copy on these two slides read noticeably smaller than the rest of the
+   deck — bump it up for consistent readability. */
+#fields .field-card p { font-size: 1rem; line-height: 1.55; }
+#traditional-vs-contextual .card p { font-size: 1rem; line-height: 1.55; }
 
 /* Polish */
 ::selection { background: var(--amber); color: var(--bg-deep); }
