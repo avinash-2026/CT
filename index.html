@@ -232,10 +232,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
   justify-content: center;
 }
 
-/* Quiz questions are revealed one at a time: keep unrevealed cards out of the
-   layout so the slide sizes to the visible question(s) only. Scoped to
-   .quiz-card so other slides' .reveal steps keep their reserved space. */
-.quiz-card:not(.in) { display: none; }
+/* Quiz shows one question at a time: only the active card is in the layout, so
+   each answered question is replaced by the next one. */
+.quiz-card { display: none; }
+.quiz-card.active { display: block; animation: quizFade 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes quizFade { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
 .quiz-option {
   padding: 0.7rem 1rem; border: 1px solid var(--border); border-radius: 14px;
@@ -280,7 +281,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 /* Anatomy (key components) rows */
 .comp-row {
   display: flex; gap: 1.25rem; align-items: flex-start;
-  padding: 1.5rem 1.25rem; border-left: 2px solid var(--border);
+  padding: 1rem 1.25rem; border-left: 2px solid var(--border);
   transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   cursor: pointer;
   border-radius: 0 12px 12px 0;
@@ -312,6 +313,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 }
 .comp-node.lit text { fill: var(--cream); }
 
+/* The components diagram is a 500x500 square; uncapped it makes the slide far
+   taller than the text column, forcing the deck to shrink everything on short
+   viewports. Cap it to the viewport height so the slide stays compact. */
+#components .illust { width: auto; max-width: 100%; max-height: 52vh; margin-inline: auto; display: block; }
+
 /* Why-it-matters editorial index */
 .why-row {
   display: grid; grid-template-columns: 1fr; gap: 0.5rem;
@@ -339,26 +345,26 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
   padding: 1rem 0.5rem; border-top: 1px solid var(--border);
 }
 @media (min-width: 768px) {
-  .vs-row { grid-template-columns: 110px 1fr 1fr; gap: 1.5rem; align-items: start; padding: 1.25rem 1rem; }
+  .vs-row { grid-template-columns: 110px 1fr 1fr; gap: 1.5rem; align-items: start; padding: 0.85rem 1rem; }
 }
 .vs-row:last-child { border-bottom: 1px solid var(--border); }
 .vs-dim {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
   letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber);
 }
 .vs-col-head {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
   letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;
 }
 .vs-col-head.trad { color: var(--coral); }
 .vs-col-head.ctx { color: var(--sage); }
-.vs-cell { font-size: 0.95rem; line-height: 1.5; color: var(--cream-dim); }
+.vs-cell { font-size: 1.1rem; line-height: 1.5; color: var(--cream-dim); }
 
 /* Practical applications field cards */
 .field-card {
   position: relative; overflow: hidden;
   background: var(--glass); border: 1px solid var(--border);
-  border-radius: 24px; padding: 2rem;
+  border-radius: 24px; padding: 1.5rem;
   transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .field-card::before {
@@ -369,9 +375,13 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 .field-card:hover { border-color: var(--border-bright); transform: translateY(-5px); background: var(--glass-warm); }
 .field-card:hover::before { opacity: 1; }
 .field-card .field-index {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.25em;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.25em;
   color: var(--field-accent, var(--amber)); text-transform: uppercase;
 }
+/* Body copy on these two slides read noticeably smaller than the rest of the
+   deck — bump it up for consistent readability. */
+#fields .field-card p { font-size: 1rem; line-height: 1.55; }
+#traditional-vs-contextual .card p { font-size: 1rem; line-height: 1.55; }
 
 /* Polish */
 ::selection { background: var(--amber); color: var(--bg-deep); }
@@ -531,20 +541,20 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       Contextual thinking means looking beyond the information itself. It's understanding the <em class="italic-serif" style="color: var(--amber-bright);">situation surrounding</em> the information, and then extracting the true meaning.
     </p>
 
-    <div class="reveal flex flex-wrap justify-center gap-6 text-center mb-10">
-      <div class="card flow-card">
+    <div class="flex flex-wrap justify-center gap-6 text-center mb-10">
+      <div class="card flow-card reveal">
         <div class="text-4xl mb-5">💬</div>
         <div class="text-sm font-mono uppercase tracking-widest mb-3" style="color: var(--muted);">Input</div>
         <h3 class="text-2xl font-semibold mb-3" style="color: var(--cream);">Information</h3>
         <p class="text-lg" style="color: var(--cream-dim);">"I'm fine."</p>
       </div>
-      <div class="card flow-card" style="background: rgba(255, 157, 77, 0.08); border-color: rgba(255, 157, 77, 0.3);">
+      <div class="card flow-card reveal" style="background: rgba(255, 157, 77, 0.08); border-color: rgba(255, 157, 77, 0.3);">
         <div class="text-4xl mb-5">👓</div>
         <div class="text-sm font-mono uppercase tracking-widest mb-3" style="color: var(--amber);">Lens</div>
         <h3 class="text-2xl font-semibold mb-3" style="color: var(--amber-bright);">+ Context</h3>
         <p class="text-lg" style="color: var(--cream-dim);">Your wife at home, after a argument.</p>
       </div>
-      <div class="card flow-card">
+      <div class="card flow-card reveal">
         <div class="text-4xl mb-5">💡</div>
         <div class="text-sm font-mono uppercase tracking-widest mb-3" style="color: var(--muted);">Output</div>
         <h3 class="text-2xl font-semibold mb-3" style="color: var(--cream);">= Meaning</h3>
@@ -671,7 +681,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
     <h2 class="display-2 reveal reveal-delay-1 mb-6">
       Traditional thinking vs <span class="italic-serif">contextual thinking</span>
     </h2>
-    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-8" style="color: var(--cream-dim); line-height: 1.5;">
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
       Most of us default to traditional thinking — fast, word-first, rule-based. Contextual thinking is the upgrade: same information, but you read the situation first.
     </p>
 
@@ -728,7 +738,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       </div>
     </div>
 
-    <div class="reveal mt-6 grid md:grid-cols-2 gap-4">
+    <div class="reveal mt-4 grid md:grid-cols-2 gap-4">
       <div class="card" style="border-color: rgba(255, 107, 74, 0.25);">
         <div class="font-mono text-xs uppercase tracking-widest mb-2" style="color: var(--coral);">Traditional read</div>
         <div class="font-serif text-2xl mb-2" style="color: var(--cream);">"Do whatever you want."</div>
@@ -741,7 +751,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       </div>
     </div>
 
-    <div class="reveal mt-6 p-5 md:p-8 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+    <div class="reveal mt-4 p-4 md:p-6 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
       <p class="pull-quote" style="font-size: clamp(1rem, 2vw, 1.35rem);">
         Same message. Two mindsets.<br>
         <span style="color: var(--amber-bright);">Context is the difference.</span>
@@ -838,11 +848,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
     <h2 class="display-2 reveal reveal-delay-1 mb-6">
       A small <span class="italic-serif">challenge</span> for you
     </h2>
-    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-12" style="color: var(--cream-dim); line-height: 1.5;">
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
       Three quick questions. Each one shows how the situation changes what words mean.
     </p>
 
-    <div class="flex flex-col gap-5 max-w-3xl" id="quizContainer"></div>
+    <div class="reveal max-w-3xl" id="quizContainer"></div>
   </div>
 </section>
 
@@ -856,7 +866,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       This skill shows up everywhere — not just in texts and at the dinner table. Many jobs depend on reading the situation right.
     </p>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
       <div class="field-card reveal" style="--field-accent: var(--amber);">
         <div class="flex items-center justify-between mb-5">
           <div class="field-index">01 / Communication</div>
@@ -912,7 +922,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       </div>
     </div>
 
-    <div class="reveal mt-8 p-6 md:p-10 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+    <div class="reveal mt-5 p-5 md:p-7 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
       <p class="pull-quote">
         "In chats, courtrooms, and code —<br>
         <span style="color: var(--amber-bright);">good decisions start</span> with understanding the situation."
@@ -924,14 +934,12 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 <!-- SECTION: Final Takeaway -->
 <section id="takeaway" class="section">
   <div class="container">
-    <div class="reveal text-center mb-8">
-      <h2 class="display-hero mb-4" style="font-size: clamp(2.25rem, 5.5vw, 4.5rem);">
-        Context <span class="italic-serif">is king.</span>
-      </h2>
-      <p class="text-base md:text-lg font-light max-w-2xl mx-auto" style="color: var(--cream-dim);">
-        The situation matters more than the words. The silence matters more than the sentence. The intent matters more than the reply.
-      </p>
-    </div>
+    <h2 class="display-2 reveal reveal-delay-1 mb-6">
+      Context <span class="italic-serif">is king.</span>
+    </h2>
+    <p class="reveal reveal-delay-2 text-xl md:text-2xl font-light max-w-3xl mb-10" style="color: var(--cream-dim); line-height: 1.5;">
+      The situation matters more than the words. The silence matters more than the sentence. The intent matters more than the reply.
+    </p>
 
     <div class="reveal grid md:grid-cols-3 gap-4 mb-8">
       <div class="glass p-5 text-center">
@@ -1049,10 +1057,11 @@ const quizData = [
 const quizContainer = document.getElementById('quizContainer');
 
 const quizSlide = document.getElementById('quiz');
+let quizIndex = 0;
 
 quizData.forEach((q, qIdx) => {
   const card = document.createElement('div');
-  card.className = 'glass p-5 reveal quiz-card';
+  card.className = 'glass p-5 quiz-card' + (qIdx === 0 ? ' active' : '');
   card.innerHTML = `
     <div class="flex items-start gap-3 mb-4">
       <div class="font-mono text-xs uppercase tracking-widest mt-1" style="color: var(--amber);">Q${String(qIdx + 1).padStart(2, '0')}</div>
@@ -1100,9 +1109,8 @@ quizData.forEach((q, qIdx) => {
         explainBox.style.color = 'var(--coral)';
       }
 
-      // Once this question is answered, reveal the next one (and keep the
-      // deck's step index in sync so navigation stays consistent).
-      revealNextStep(quizSlide);
+      // Answering unblocks the deck: advancing (arrow/click) hides this
+      // question and shows the next one.
       updateChrome();
     });
   });
@@ -1311,28 +1319,70 @@ function goToSlide(idx, dir, opts = {}) {
   inn.classList.add('active');
 
   current = idx;
+  // Entering the quiz from the front always starts at the first question.
+  if (inn.id === 'quiz' && !opts.showAll) showQuizQuestion(0);
   updateChrome();
   fitSlide(inn);
   inn.scrollTop = 0;
   resetSlideReveals(inn, opts.showAll ? getRevealables(inn).length : 1);
 }
 
-// On the quiz slide, block advancing while the most recently revealed
-// question is still unanswered — the next question (or next slide) only
-// appears once the current question has been answered.
+// Quiz cards: only one question is shown at a time. Helpers below drive the
+// "answer → hide → show next" flow and gate deck navigation accordingly.
+function quizCards() {
+  return quizContainer ? Array.from(quizContainer.querySelectorAll('.quiz-card')) : [];
+}
+function quizCurrentCard() {
+  return quizCards()[quizIndex] || null;
+}
+function showQuizQuestion(i) {
+  const cards = quizCards();
+  cards.forEach((c, idx) => c.classList.toggle('active', idx === i));
+  quizIndex = i;
+}
+
+// True while the quiz question on screen still needs an answer — used to keep
+// the deck (and the Next button) from skipping past an unanswered question.
 function quizAdvanceBlocked(slide) {
   if (!slide || slide.id !== 'quiz') return false;
-  const els = getRevealables(slide);
-  const revealed = slideRevealIndex.get(slide) ?? 0;
-  if (revealed === 0) return false;
-  const last = els[revealed - 1];
-  return !!(last && last.classList.contains('quiz-card') && last.dataset.answered !== 'true');
+  if (!quizContainer || !quizContainer.classList.contains('in')) return false;
+  const card = quizCurrentCard();
+  return !!(card && card.dataset.answered !== 'true');
+}
+
+// Returns true when the quiz handled the advance itself (stay on this slide).
+function handleQuizAdvance(slide) {
+  if (!slide || slide.id !== 'quiz') return false;
+  if (!quizContainer || !quizContainer.classList.contains('in')) return false;
+  const cards = quizCards();
+  const card = cards[quizIndex];
+  if (card && card.dataset.answered !== 'true') return true; // must answer first
+  if (quizIndex < cards.length - 1) {
+    showQuizQuestion(quizIndex + 1);
+    fitSlide(slide);
+    return true;
+  }
+  return false; // last question answered — let the deck move on
+}
+
+function handleQuizRetreat(slide) {
+  if (!slide || slide.id !== 'quiz') return false;
+  if (!quizContainer || !quizContainer.classList.contains('in')) return false;
+  if (quizIndex > 0) {
+    showQuizQuestion(quizIndex - 1);
+    fitSlide(slide);
+    return true;
+  }
+  return false;
 }
 
 function advanceDeck() {
   dismissHint();
   const slide = slides[current];
-  if (quizAdvanceBlocked(slide)) return;
+  if (handleQuizAdvance(slide)) {
+    updateChrome();
+    return;
+  }
   if (revealNextStep(slide)) {
     updateChrome();
     return;
@@ -1343,6 +1393,10 @@ function advanceDeck() {
 function retreatDeck() {
   dismissHint();
   const slide = slides[current];
+  if (handleQuizRetreat(slide)) {
+    updateChrome();
+    return;
+  }
   if (hideLastStep(slide)) {
     updateChrome();
     return;
