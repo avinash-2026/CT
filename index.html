@@ -232,10 +232,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
   justify-content: center;
 }
 
-/* Quiz questions are revealed one at a time: keep unrevealed cards out of the
-   layout so the slide sizes to the visible question(s) only. Scoped to
-   .quiz-card so other slides' .reveal steps keep their reserved space. */
-.quiz-card:not(.in) { display: none; }
+/* Quiz shows one question at a time: only the active card is in the layout, so
+   each answered question is replaced by the next one. */
+.quiz-card { display: none; }
+.quiz-card.active { display: block; animation: quizFade 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes quizFade { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
 .quiz-option {
   padding: 0.7rem 1rem; border: 1px solid var(--border); border-radius: 14px;
@@ -842,7 +843,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       Three quick questions. Each one shows how the situation changes what words mean.
     </p>
 
-    <div class="flex flex-col gap-5 max-w-3xl" id="quizContainer"></div>
+    <div class="reveal max-w-3xl" id="quizContainer"></div>
   </div>
 </section>
 
@@ -1047,10 +1048,11 @@ const quizData = [
 const quizContainer = document.getElementById('quizContainer');
 
 const quizSlide = document.getElementById('quiz');
+let quizIndex = 0;
 
 quizData.forEach((q, qIdx) => {
   const card = document.createElement('div');
-  card.className = 'glass p-5 reveal quiz-card';
+  card.className = 'glass p-5 quiz-card' + (qIdx === 0 ? ' active' : '');
   card.innerHTML = `
     <div class="flex items-start gap-3 mb-4">
       <div class="font-mono text-xs uppercase tracking-widest mt-1" style="color: var(--amber);">Q${String(qIdx + 1).padStart(2, '0')}</div>
@@ -1098,9 +1100,8 @@ quizData.forEach((q, qIdx) => {
         explainBox.style.color = 'var(--coral)';
       }
 
-      // Once this question is answered, reveal the next one (and keep the
-      // deck's step index in sync so navigation stays consistent).
-      revealNextStep(quizSlide);
+      // Answering unblocks the deck: advancing (arrow/click) hides this
+      // question and shows the next one.
       updateChrome();
     });
   });
@@ -1309,28 +1310,70 @@ function goToSlide(idx, dir, opts = {}) {
   inn.classList.add('active');
 
   current = idx;
+  // Entering the quiz from the front always starts at the first question.
+  if (inn.id === 'quiz' && !opts.showAll) showQuizQuestion(0);
   updateChrome();
   fitSlide(inn);
   inn.scrollTop = 0;
   resetSlideReveals(inn, opts.showAll ? getRevealables(inn).length : 1);
 }
 
-// On the quiz slide, block advancing while the most recently revealed
-// question is still unanswered — the next question (or next slide) only
-// appears once the current question has been answered.
+// Quiz cards: only one question is shown at a time. Helpers below drive the
+// "answer → hide → show next" flow and gate deck navigation accordingly.
+function quizCards() {
+  return quizContainer ? Array.from(quizContainer.querySelectorAll('.quiz-card')) : [];
+}
+function quizCurrentCard() {
+  return quizCards()[quizIndex] || null;
+}
+function showQuizQuestion(i) {
+  const cards = quizCards();
+  cards.forEach((c, idx) => c.classList.toggle('active', idx === i));
+  quizIndex = i;
+}
+
+// True while the quiz question on screen still needs an answer — used to keep
+// the deck (and the Next button) from skipping past an unanswered question.
 function quizAdvanceBlocked(slide) {
   if (!slide || slide.id !== 'quiz') return false;
-  const els = getRevealables(slide);
-  const revealed = slideRevealIndex.get(slide) ?? 0;
-  if (revealed === 0) return false;
-  const last = els[revealed - 1];
-  return !!(last && last.classList.contains('quiz-card') && last.dataset.answered !== 'true');
+  if (!quizContainer || !quizContainer.classList.contains('in')) return false;
+  const card = quizCurrentCard();
+  return !!(card && card.dataset.answered !== 'true');
+}
+
+// Returns true when the quiz handled the advance itself (stay on this slide).
+function handleQuizAdvance(slide) {
+  if (!slide || slide.id !== 'quiz') return false;
+  if (!quizContainer || !quizContainer.classList.contains('in')) return false;
+  const cards = quizCards();
+  const card = cards[quizIndex];
+  if (card && card.dataset.answered !== 'true') return true; // must answer first
+  if (quizIndex < cards.length - 1) {
+    showQuizQuestion(quizIndex + 1);
+    fitSlide(slide);
+    return true;
+  }
+  return false; // last question answered — let the deck move on
+}
+
+function handleQuizRetreat(slide) {
+  if (!slide || slide.id !== 'quiz') return false;
+  if (!quizContainer || !quizContainer.classList.contains('in')) return false;
+  if (quizIndex > 0) {
+    showQuizQuestion(quizIndex - 1);
+    fitSlide(slide);
+    return true;
+  }
+  return false;
 }
 
 function advanceDeck() {
   dismissHint();
   const slide = slides[current];
-  if (quizAdvanceBlocked(slide)) return;
+  if (handleQuizAdvance(slide)) {
+    updateChrome();
+    return;
+  }
   if (revealNextStep(slide)) {
     updateChrome();
     return;
@@ -1341,6 +1384,10 @@ function advanceDeck() {
 function retreatDeck() {
   dismissHint();
   const slide = slides[current];
+  if (handleQuizRetreat(slide)) {
+    updateChrome();
+    return;
+  }
   if (hideLastStep(slide)) {
     updateChrome();
     return;
