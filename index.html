@@ -313,6 +313,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 }
 .comp-node.lit text { fill: var(--cream); }
 
+/* The components diagram is a 500x500 square; uncapped it makes the slide far
+   taller than the text column, forcing the deck to shrink everything on short
+   viewports. Cap it to the viewport height so the slide stays compact. */
+#components .illust { width: auto; max-width: 100%; max-height: 52vh; margin-inline: auto; display: block; }
+
 /* Why-it-matters editorial index */
 .why-row {
   display: grid; grid-template-columns: 1fr; gap: 0.5rem;
@@ -340,7 +345,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
   padding: 1rem 0.5rem; border-top: 1px solid var(--border);
 }
 @media (min-width: 768px) {
-  .vs-row { grid-template-columns: 110px 1fr 1fr; gap: 1.5rem; align-items: start; padding: 1.25rem 1rem; }
+  .vs-row { grid-template-columns: 110px 1fr 1fr; gap: 1.5rem; align-items: start; padding: 0.85rem 1rem; }
 }
 .vs-row:last-child { border-bottom: 1px solid var(--border); }
 .vs-dim {
@@ -359,7 +364,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
 .field-card {
   position: relative; overflow: hidden;
   background: var(--glass); border: 1px solid var(--border);
-  border-radius: 24px; padding: 2rem;
+  border-radius: 24px; padding: 1.5rem;
   transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .field-card::before {
@@ -729,7 +734,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       </div>
     </div>
 
-    <div class="reveal mt-6 grid md:grid-cols-2 gap-4">
+    <div class="reveal mt-4 grid md:grid-cols-2 gap-4">
       <div class="card" style="border-color: rgba(255, 107, 74, 0.25);">
         <div class="font-mono text-xs uppercase tracking-widest mb-2" style="color: var(--coral);">Traditional read</div>
         <div class="font-serif text-2xl mb-2" style="color: var(--cream);">"Do whatever you want."</div>
@@ -742,7 +747,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       </div>
     </div>
 
-    <div class="reveal mt-6 p-5 md:p-8 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+    <div class="reveal mt-4 p-4 md:p-6 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
       <p class="pull-quote" style="font-size: clamp(1rem, 2vw, 1.35rem);">
         Same message. Two mindsets.<br>
         <span style="color: var(--amber-bright);">Context is the difference.</span>
@@ -857,7 +862,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       This skill shows up everywhere — not just in texts and at the dinner table. Many jobs depend on reading the situation right.
     </p>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
       <div class="field-card reveal" style="--field-accent: var(--amber);">
         <div class="flex items-center justify-between mb-5">
           <div class="field-index">01 / Communication</div>
@@ -913,7 +918,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 400; line-height: 1.05
       </div>
     </div>
 
-    <div class="reveal mt-8 p-6 md:p-10 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
+    <div class="reveal mt-5 p-5 md:p-7 glass text-center" style="background: linear-gradient(135deg, rgba(255, 157, 77, 0.06), rgba(255, 107, 74, 0.04));">
       <p class="pull-quote">
         "In chats, courtrooms, and code —<br>
         <span style="color: var(--amber-bright);">good decisions start</span> with understanding the situation."
